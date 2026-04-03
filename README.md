@@ -35,13 +35,5 @@ To use the YouTube streaming feature, you must have the following tools in the s
 
 ---
 
-## 📂 Project Structure
--   `Source/MainComponent.h/cpp`: The main UI and audio engine coordination.
--   `Source/PadComponent.h`: Logic for individual drum pads (UI + Drag & Drop).
--   `Source/SidebarBrowser.h`: File system navigation and sound list.
--   `Source/YouTubeHandler.h`: Handles asynchronous downloading and processing.
-
----
-
 ## ⚖️ License
 [MIT License](LICENSE)
