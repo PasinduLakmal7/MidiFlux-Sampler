@@ -1,6 +1,6 @@
 # 🎹 Modern MIDI Player & Sampler
 
-A powerful, dark-themed MIDI player built with **JUCE (C++)**. This application features a premium "glassmorphism" interface, 8 interactive drum pads, a dynamic file browser, and integrated YouTube audio streaming.
+A powerful, dark-themed MIDI player built with **JUCE (C++)**. This application features a "glassmorphism" interface, 8 interactive drum pads, a dynamic file browser, and integrated YouTube audio streaming.
 
 ---
 
@@ -22,7 +22,7 @@ To use the YouTube streaming feature, you must have the following tools in the s
 
 ### 2. Building the Project
 1.  Open the `.jucer` file in the **JUCE Projucer**.
-2.  Select your preferred exporter (e.g., Visual Studio 2022).
+2.  Select your preferred exporter (e.g., Visual Studio).
 3.  Click "Save and Open in IDE".
 4.  Build the solution in your IDE (Release mode recommended).
 
@@ -34,6 +34,3 @@ To use the YouTube streaming feature, you must have the following tools in the s
 3.  **YouTube**: Paste a link and click **"Play YouTube"** to stream music in the background.
 
 ---
-
-## ⚖️ License
-[MIT License](LICENSE)
