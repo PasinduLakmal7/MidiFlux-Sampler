@@ -1,0 +1,36 @@
+# --- JUCE Specific ---
+Builds/
+JuceLibraryCode/
+.jucer
+
+# --- Visual Studio ---
+.vs/
+*.vssscc
+*.vspscc
+*.sln.docstates
+*.suo
+*.user
+*.useroscc
+*.sln.targets
+Debug/
+Release/
+x64/
+x86/
+bin/
+obj/
+
+# --- Tools & Binaries (Large Files) ---
+yt-dlp.exe
+ffmpeg.exe
+ffprobe.exe
+*.wav
+*.mp3
+*.flac
+
+# --- OS Specific ---
+.DS_Store
+Thumbs.db
+
+# --- Temporary ---
+/tmp/
+midi_player_temp_audio.wav
