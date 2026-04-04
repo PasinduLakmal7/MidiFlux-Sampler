@@ -36,13 +36,8 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(rackManager.get());
 
-    // Load first rack automatically on start
-    auto initialRack = RackPreset{ "DEFAULT RACK" }; // Placeholder
-    // But better to just trigger a click if we had it
-    // For now, let's just make sure it's visible.
-    // If we want it to actually load, we'd need to expose the racks list or similar.
-    // But the user might prefer a blank start if no racks exist.
-    // However, I already added a default rack in RackManager constructor.
+    auto initialRack = RackPreset{ "DEFAULT RACK" }; 
+
 
     // MIDI Setup
     auto midiInputs = juce::MidiInput::getAvailableDevices();

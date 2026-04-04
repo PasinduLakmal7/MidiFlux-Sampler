@@ -11,10 +11,10 @@ struct RackPreset
 };
 
 class RackManager : public juce::Component,
-    public juce::ListBoxModel
+                    public juce::ListBoxModel
 {
 public:
-    RackManager(std::function<void(const RackPreset&)> onRackLoad)
+    RackManager(std::function<void(const RackPreset &)> onRackLoad)
         : onRackLoad(onRackLoad)
     {
         // Setup ListBox
@@ -26,12 +26,13 @@ public:
 
         // Setup Add Button
         addRackButton.setButtonText("+ ADD NEW RACK");
-        addRackButton.onClick = [this] { addNewRack(); };
+        addRackButton.onClick = [this]
+        { addNewRack(); };
         addAndMakeVisible(addRackButton);
 
         loadRacksFromDisk();
 
-        // If empty, add a default one
+        // add a default one
         if (racks.empty())
         {
             addNewRack("DEFAULT RACK");
@@ -49,7 +50,7 @@ public:
     // ListBoxModel
     int getNumRows() override { return (int)racks.size(); }
 
-    void paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool rowIsSelected) override
+    void paintListBoxItem(int rowNumber, juce::Graphics &g, int width, int height, bool rowIsSelected) override
     {
         auto bounds = juce::Rectangle<int>(0, 0, width, height).reduced(6, 4);
 
@@ -61,8 +62,7 @@ public:
         {
             g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.6f));
             g.drawRoundedRectangle(bounds.toFloat(), 10.0f, 1.5f);
-            
-            // Neon Glow Indicator
+
             g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.8f));
             g.fillRoundedRectangle((float)bounds.getX() + 8.0f, (float)bounds.getY() + bounds.getHeight() * 0.35f, 3.0f, bounds.getHeight() * 0.3f, 1.0f);
         }
@@ -73,7 +73,7 @@ public:
         g.drawText(racks[rowNumber].name, 30, 0, width - 85, height, juce::Justification::centredLeft, true);
     }
 
-    void listBoxItemClicked(int row, const juce::MouseEvent& e) override
+    void listBoxItemClicked(int row, const juce::MouseEvent &e) override
     {
         if (e.mods.isRightButtonDown())
         {
@@ -82,7 +82,8 @@ public:
         else
         {
             rackList.selectRow(row);
-            if (onRackLoad) onRackLoad(racks[row]);
+            if (onRackLoad)
+                onRackLoad(racks[row]);
         }
     }
 
@@ -90,13 +91,14 @@ public:
     {
         RackPreset r;
         r.name = name;
-        for (auto& p : r.padPaths) p = "";
+        for (auto &p : r.padPaths)
+            p = "";
         racks.push_back(r);
         saveRacksToDisk();
         rackList.updateContent();
     }
 
-    void updateRackPads(int row, const std::array<juce::File, 8>& files)
+    void updateRackPads(int row, const std::array<juce::File, 8> &files)
     {
         if (row >= 0 && row < racks.size())
         {
@@ -117,37 +119,36 @@ private:
         m.addItem(3, "Save Current Sounds Here");
 
         m.showMenuAsync(juce::PopupMenu::Options(), [this, row](int result)
-            {
+                        {
                 if (result == 1) renameRack(row);
                 else if (result == 2) deleteRack(row);
                 else if (result == 3) {
-                    // This would need a callback to get current sounds
                     if (onRequestCurrentSounds) onRequestCurrentSounds(row);
-                }
-            });
+                } });
     }
 
     void renameRack(int row)
     {
-        auto* alert = new juce::AlertWindow("Rename Rack", "Enter new name:", juce::AlertWindow::NoIcon);
+        auto *alert = new juce::AlertWindow("Rename Rack", "Enter new name:", juce::AlertWindow::NoIcon);
         alert->addTextEditor("name", racks[row].name);
         alert->addButton("OK", 1, juce::KeyPress(juce::KeyPress::returnKey));
         alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
 
         alert->enterModalState(true, juce::ModalCallbackFunction::create([this, row, alert](int res)
-            {
+                                                                         {
                 if (res == 1)
                 {
                     racks[row].name = alert->getTextEditorContents("name");
                     saveRacksToDisk();
                     rackList.updateContent();
-                }
-            }), true);
+                } }),
+                               true);
     }
 
     void deleteRack(int row)
     {
-        if (racks.size() <= 1) return; // Keep at least one
+        if (racks.size() <= 1)
+            return;
 
         racks.erase(racks.begin() + row);
         saveRacksToDisk();
@@ -160,12 +161,13 @@ private:
         juce::DynamicObject::Ptr obj = new juce::DynamicObject();
         juce::Array<juce::var> rackArray;
 
-        for (auto& r : racks)
+        for (auto &r : racks)
         {
             juce::DynamicObject::Ptr rObj = new juce::DynamicObject();
             rObj->setProperty("name", r.name);
             juce::Array<juce::var> pathArray;
-            for (auto& p : r.padPaths) pathArray.add(p);
+            for (auto &p : r.padPaths)
+                pathArray.add(p);
             rObj->setProperty("pads", pathArray);
             rackArray.add(rObj.get());
         }
@@ -184,21 +186,23 @@ private:
     void loadRacksFromDisk()
     {
         auto file = getSettingsFile();
-        if (!file.existsAsFile()) return;
+        if (!file.existsAsFile())
+            return;
 
         auto json = juce::JSON::parse(file.loadFileAsString());
         if (json.isObject())
         {
             racks.clear();
-            if (auto* rackArray = json["racks"].getArray())
+            if (auto *rackArray = json["racks"].getArray())
             {
-                for (auto& rVar : *rackArray)
+                for (auto &rVar : *rackArray)
                 {
                     RackPreset r;
                     r.name = rVar["name"].toString();
-                    if (r.name.isEmpty()) r.name = "UNNAMED";
+                    if (r.name.isEmpty())
+                        r.name = "UNNAMED";
 
-                    if (auto* padArray = rVar["pads"].getArray())
+                    if (auto *padArray = rVar["pads"].getArray())
                     {
                         for (int i = 0; i < 8 && i < padArray->size(); ++i)
                             r.padPaths[i] = (*padArray)[i].toString();
@@ -212,8 +216,9 @@ private:
     juce::File getSettingsFile()
     {
         auto dir = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
-            .getChildFile("GlassSampler-MidiMod");
-        if (!dir.exists()) dir.createDirectory();
+                       .getChildFile("GlassSampler-MidiMod");
+        if (!dir.exists())
+            dir.createDirectory();
         return dir.getChildFile("racks.json");
     }
 
@@ -224,13 +229,13 @@ private:
     class GlassyButton : public juce::TextButton
     {
     public:
-        GlassyButton(const juce::String& name) : juce::TextButton(name) {}
-        void paintButton(juce::Graphics& g, bool m, bool d) override
+        GlassyButton(const juce::String &name) : juce::TextButton(name) {}
+        void paintButton(juce::Graphics &g, bool m, bool d) override
         {
             auto b = getLocalBounds().toFloat().reduced(1.0f);
             g.setColour(juce::Colour(0xff1a1a2e).withAlpha(d ? 0.9f : 0.6f));
             g.fillRoundedRectangle(b, 8.0f);
-            g.setColour(juce::Colour(0xff00d4ff).withAlpha(m? 0.8f : 0.4f));
+            g.setColour(juce::Colour(0xff00d4ff).withAlpha(m ? 0.8f : 0.4f));
             g.drawRoundedRectangle(b, 8.0f, 1.5f);
             g.setColour(juce::Colours::white.withAlpha(m ? 1.0f : 0.8f));
             g.setFont(juce::Font(13.0f, juce::Font::bold));
@@ -238,9 +243,9 @@ private:
         }
     };
     juce::ListBox rackList;
-    GlassyButton addRackButton{ "+ ADD NEW RACK" };
+    GlassyButton addRackButton{"+ ADD NEW RACK"};
     std::vector<RackPreset> racks;
-    std::function<void(const RackPreset&)> onRackLoad;
+    std::function<void(const RackPreset &)> onRackLoad;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(RackManager)
 };
