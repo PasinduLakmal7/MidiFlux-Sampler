@@ -9,6 +9,7 @@
 #include "PadComponent.h"
 #include "SidebarBrowser.h"
 #include "YouTubeHandler.h"
+#include "RackManager.h"
 
 class MainComponent : public juce::AudioAppComponent,
     public juce::MidiInputCallback,
@@ -24,6 +25,7 @@ public:
 
     void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
     void loadSoundIntoPad(int padIndex, juce::File soundFile);
+    void clearSoundFromPad(int padIndex);
 
     void paint(juce::Graphics& g) override;
     void resized() override;
@@ -41,14 +43,16 @@ private:
 
     // UI Components
     std::unique_ptr<SidebarBrowser> sidebarBrowser;
+    std::unique_ptr<RackManager> rackManager;
     std::unique_ptr<YouTubeHandler> youtubeHandler;
     std::array<std::unique_ptr<PadComponent>, 8> padComponents;
     std::array<juce::File, 8> padSoundFiles;
 
     // Buttons
-    juce::TextButton testButton{ "Test Drum Hit" };
     juce::TextEditor youtubeLinkBox;
     juce::TextButton playYoutubeButton{ "Play YouTube" };
+
+    bool isLoadingRack = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

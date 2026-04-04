@@ -4,6 +4,12 @@
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1">
   <MAINGROUP id="XejzQ2" name="midi player">
     <GROUP id="{FA4832F5-EF57-4163-6A39-5F89F829C5FA}" name="Source">
+      <FILE id="RB5bkC" name="RackManager.h" compile="0" resource="0" file="Source/RackManager.h"/>
+      <FILE id="e6hUmg" name="SidebarBrowser.h" compile="0" resource="0"
+            file="Source/SidebarBrowser.h"/>
+      <FILE id="tDMmvL" name="PadComponent.h" compile="0" resource="0" file="Source/PadComponent.h"/>
+      <FILE id="Xqt2nw" name="YouTubeHandler.h" compile="0" resource="0"
+            file="Source/YouTubeHandler.h"/>
       <FILE id="Q80EFB" name="Main.cpp" compile="1" resource="0" file="Source/Main.cpp"/>
       <FILE id="Jb1wJX" name="MainComponent.h" compile="0" resource="0" file="Source/MainComponent.h"/>
       <FILE id="HQZbBf" name="MainComponent.cpp" compile="1" resource="0"

@@ -52,16 +52,23 @@ public:
         g.drawRoundedRectangle(bounds, 12, (isHovering || isMouseDown) ? 2.0f : 1.0f);
 
         // Pad Text
-        g.setColour(isHovering || isMouseDown ? juce::Colours::white : juce::Colours::white.withAlpha(0.8f));
-        g.setFont(juce::Font(15.0f, juce::Font::bold));
+        // Pad Text
+        g.setColour(isHovering || isMouseDown ? juce::Colours::white : juce::Colours::white.withAlpha(0.6f));
+        g.setFont(juce::Font(18.0f, juce::Font::bold));
         juce::String displayText = fileName.isEmpty()
             ? ("PAD " + juce::String(padIndex + 1))
-            : fileName.substring(0, 12).toUpperCase();
+            : fileName.substring(0, 16).toUpperCase();
+
+        // Index Label (Small neon number at top left)
+        g.setColour(juce::Colour(0xff00d4ff).withAlpha(isHovering || isMouseDown ? 0.9f : 0.4f));
+        g.setFont(juce::Font(12.0f, juce::Font::bold));
+        g.drawText(juce::String(padIndex + 1), bounds.reduced(8).getX(), bounds.reduced(8).getY(), 20, 20, juce::Justification::topLeft);
 
         // Offset text slightly when pressed for "3D" feel
         auto textBounds = bounds.reduced(5);
         if (isMouseDown) textBounds.translate(0, 1);
 
+        g.setColour(isHovering || isMouseDown ? juce::Colours::white : juce::Colours::white.withAlpha(0.85f));
         g.drawText(displayText, textBounds, juce::Justification::centred, true);
     }
 
@@ -114,6 +121,12 @@ public:
     void setFileName(const juce::String& name)
     {
         fileName = name;
+        repaint();
+    }
+
+    void clear()
+    {
+        fileName = "";
         repaint();
     }
 

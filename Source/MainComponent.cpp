@@ -15,8 +15,34 @@ MainComponent::MainComponent()
 
     // Initialize Sub-Handlers
     youtubeHandler = std::make_unique<YouTubeHandler>(formatManager);
-    sidebarBrowser = std::make_unique<SidebarBrowser>([this](juce::File f) { loadSoundIntoPad(0, f); });
+    sidebarBrowser = std::make_unique<SidebarBrowser>(nullptr);
     addAndMakeVisible(sidebarBrowser.get());
+
+    rackManager = std::make_unique<RackManager>([this](const RackPreset& r) {
+        isLoadingRack = true;
+        for (int i = 0; i < 8; ++i)
+        {
+            if (r.padPaths[i].isNotEmpty())
+                loadSoundIntoPad(i, juce::File(r.padPaths[i]));
+            else
+                clearSoundFromPad(i);
+        }
+        isLoadingRack = false;
+        });
+
+    rackManager->onRequestCurrentSounds = [this](int row) {
+        rackManager->updateRackPads(row, padSoundFiles);
+        };
+
+    addAndMakeVisible(rackManager.get());
+
+    // Load first rack automatically on start
+    auto initialRack = RackPreset{ "DEFAULT RACK" }; // Placeholder
+    // But better to just trigger a click if we had it
+    // For now, let's just make sure it's visible.
+    // If we want it to actually load, we'd need to expose the racks list or similar.
+    // But the user might prefer a blank start if no racks exist.
+    // However, I already added a default rack in RackManager constructor.
 
     // MIDI Setup
     auto midiInputs = juce::MidiInput::getAvailableDevices();
@@ -53,18 +79,9 @@ MainComponent::MainComponent()
         addAndMakeVisible(padComponents[i].get());
     }
 
-    // Load default sound
-    juce::File defaultDrum("C:\\Windows\\Media\\chimes.wav");
-    if (defaultDrum.existsAsFile()) loadSoundIntoPad(0, defaultDrum);
+
 
     // UI Main Controls
-    addAndMakeVisible(testButton);
-    testButton.onClick = [this] {
-        auto msg = juce::MidiMessage::noteOn(1, 36, (juce::uint8)120);
-        msg.setTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001);
-        handleIncomingMidiMessage(nullptr, msg);
-        };
-
     addAndMakeVisible(youtubeLinkBox);
     youtubeLinkBox.setTextToShowWhenEmpty("Paste YouTube Link Here", juce::Colours::grey);
 
@@ -123,41 +140,54 @@ void MainComponent::paint(juce::Graphics& g)
 {
     auto w = (float)getWidth();
     auto h = (float)getHeight();
-    g.fillAll(juce::Colour(0xff0b0b14));
+    int browserWidth = 300;
+    int rackWidth = 260;
 
-    juce::ColourGradient backgroundGlow(juce::Colour(0xff161625), w * 0.7f, h * 0.5f,
-        juce::Colour(0xff0b0b14), w, h, true);
+    // Background Gradient Overlay
+    juce::ColourGradient backgroundGlow(juce::Colour(0xff0b0b14), w * 0.5f, h * 0.5f,
+        juce::Colour(0xff0a0a14), w, h, true);
+    backgroundGlow.addColour(0.4, juce::Colour(0xff121220));
     g.setGradientFill(backgroundGlow);
     g.fillAll();
 
-    int sidebarWidth = 380;
+    // Sidebar Panels (Glass Effect)
     g.setColour(juce::Colours::black.withAlpha(0.2f));
-    g.fillRect(0, 0, sidebarWidth + 10, (int)h);
+    g.fillRect(0, 0, browserWidth + rackWidth + 20, (int)h);
 
-    juce::ColourGradient lineGrad(juce::Colour(0x0000d4ff), (float)sidebarWidth + 10.0f, 20.0f,
-        juce::Colour(0xff00d4ff), (float)sidebarWidth + 10.0f, h / 2.0f, false);
-    lineGrad.addColour(1.0, juce::Colour(0x0000d4ff).withAlpha(0.0f));
-    g.setGradientFill(lineGrad);
-    g.drawLine((float)sidebarWidth + 10.0f, 20.0f, (float)sidebarWidth + 10.0f, h - 20.0f, 1.5f);
+    // Glowing Divider Lines
+    auto lineX1 = (float)browserWidth + 5.0f;
+    auto lineX2 = (float)browserWidth + rackWidth + 15.0f;
+
+    for (float x : { lineX1, lineX2 })
+    {
+        juce::ColourGradient lineGrad(juce::Colour(0x0000d4ff), x, 20.0f,
+            juce::Colour(0xff00d4ff), x, h / 2.0f, false);
+        lineGrad.addColour(1.0, juce::Colour(0x0000d4ff).withAlpha(0.0f));
+        g.setGradientFill(lineGrad);
+        g.drawLine(x, 20.0f, x, h - 20.0f, 1.2f);
+    }
 }
 
 void MainComponent::resized()
 {
-    int sidebarWidth = 380;
-    sidebarBrowser->setBounds(0, 0, sidebarWidth + 10, getHeight());
+    int browserWidth = 300;
+    int rackWidth = 260;
 
-    int mainX = sidebarWidth + 20;
-    int mainWidth = getWidth() - sidebarWidth - 30;
+    sidebarBrowser->setBounds(0, 0, browserWidth, getHeight());
+    rackManager->setBounds(browserWidth + 10, 0, rackWidth, getHeight());
 
-    testButton.setBounds(mainX, 10, 150, 35);
-    youtubeLinkBox.setBounds(mainX, 55, mainWidth - 160, 35);
-    playYoutubeButton.setBounds(mainX + mainWidth - 150, 55, 140, 35);
+    int mainX = browserWidth + rackWidth + 40;
+    int mainWidth = getWidth() - mainX - 20;
 
-    int padWidth = (mainWidth - 30) / 4;
-    int padHeight = juce::jmin(70, (getHeight() - 150) / 2);
+    youtubeLinkBox.setBounds(mainX, 20, mainWidth - 140, 38);
+    playYoutubeButton.setBounds(mainX + mainWidth - 130, 20, 120, 38);
+
+    int padAreaWidth = mainWidth - 20;
+    int padWidth = (padAreaWidth - 20) / 4;
+    int padHeight = juce::jmin(110, (getHeight() - 150) / 2);
     int startX = mainX + 10;
-    int startY = 110;
-    int padSpacing = 5;
+    int startY = 100;
+    int padSpacing = 8;
 
     for (int i = 0; i < 8; ++i)
     {
@@ -165,7 +195,7 @@ void MainComponent::resized()
         int col = i % 4;
         padComponents[i]->setBounds(startX + col * (padWidth + padSpacing),
             startY + row * (padHeight + padSpacing),
-            padWidth - 5, padHeight - 5);
+            padWidth, padHeight);
     }
 }
 
@@ -178,14 +208,56 @@ void MainComponent::handleIncomingMidiMessage(juce::MidiInput* source, const juc
 void MainComponent::loadSoundIntoPad(int padIndex, juce::File soundFile)
 {
     if (!soundFile.existsAsFile()) return;
-    juce::AudioFormatReader* reader = formatManager.createReaderFor(soundFile);
+    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(soundFile));
     if (reader == nullptr) return;
 
     int midiNote = 36 + padIndex;
     juce::BigInteger noteRange;
     noteRange.setRange(midiNote, 1, true);
 
+    // Remove previous sound for this note if it exists
+    for (int i = sampler.getNumSounds(); --i >= 0;)
+    {
+        if (auto* sound = dynamic_cast<juce::SamplerSound*>(sampler.getSound(i).get()))
+        {
+            if (sound->appliesToNote(midiNote))
+                sampler.removeSound(i);
+        }
+    }
+
     sampler.addSound(new juce::SamplerSound("Pad" + juce::String(padIndex), *reader, noteRange, midiNote, 0.1, 0.1, 10.0));
     padSoundFiles[padIndex] = soundFile;
     padComponents[padIndex]->setFileName(soundFile.getFileNameWithoutExtension());
+
+    // Auto-save back to current rack
+    if (!isLoadingRack && rackManager != nullptr)
+    {
+        int row = rackManager->getCurrentSelectedIndex();
+        if (row >= 0) rackManager->updateRackPads(row, padSoundFiles);
+    }
+}
+
+void MainComponent::clearSoundFromPad(int padIndex)
+{
+    int midiNote = 36 + padIndex;
+
+    for (int i = sampler.getNumSounds(); --i >= 0;)
+    {
+        if (auto* sound = dynamic_cast<juce::SamplerSound*>(sampler.getSound(i).get()))
+        {
+            if (sound->appliesToNote(midiNote))
+                sampler.removeSound(i);
+        }
+    }
+
+    padSoundFiles[padIndex] = juce::File();
+    if (padComponents[padIndex] != nullptr)
+        padComponents[padIndex]->clear();
+
+    // Auto-save update
+    if (!isLoadingRack && rackManager != nullptr)
+    {
+        int row = rackManager->getCurrentSelectedIndex();
+        if (row >= 0) rackManager->updateRackPads(row, padSoundFiles);
+    }
 }

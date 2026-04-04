@@ -61,14 +61,11 @@ public:
 
         if (rowIsSelected)
         {
-            g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.15f));
+            g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.12f));
             g.fillRoundedRectangle(bounds.toFloat(), 6.0f);
-            g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.4f));
-            g.drawRoundedRectangle(bounds.toFloat(), 6.0f, 1.0f);
+            g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.5f));
+            g.drawRoundedRectangle(bounds.toFloat(), 6.0f, 1.2f);
         }
-
-        g.setColour(juce::Colours::white.withAlpha(rowIsSelected ? 1.0f : 0.7f));
-        g.setFont(juce::Font(14.0f, rowIsSelected ? juce::Font::bold : juce::Font::plain));
 
         juce::String name = soundList[rowNumber];
         bool isFolder = name.startsWith("[DIR] ");
@@ -76,17 +73,18 @@ public:
         if (isFolder)
         {
             name = name.substring(6);
-            g.setColour(juce::Colours::orange.withAlpha(0.8f));
+            g.setColour(juce::Colour(0xffff9d00).withAlpha(0.8f));
             g.drawText(">> ", 10, 0, 20, height, juce::Justification::centredLeft);
-            g.setColour(juce::Colours::white.withAlpha(0.9f));
+            g.setColour(juce::Colours::white.withAlpha(rowIsSelected ? 1.0f : 0.85f));
         }
         else
         {
-            g.setColour(juce::Colours::cyan.withAlpha(0.6f));
-            g.drawText("-- ", 10, 0, 20, height, juce::Justification::centredLeft);
-            g.setColour(juce::Colours::white.withAlpha(0.7f));
+            g.setColour(juce::Colour(0xff00d4ff).withAlpha(0.6f));
+            g.drawText(":: ", 10, 0, 20, height, juce::Justification::centredLeft);
+            g.setColour(juce::Colours::white.withAlpha(rowIsSelected ? 1.0f : 0.65f));
         }
 
+        g.setFont(juce::Font(14.0f, rowIsSelected ? juce::Font::bold : juce::Font::plain));
         g.drawText(name, 35, 0, width - 45, height, juce::Justification::centredLeft, true);
     }
 
@@ -147,7 +145,24 @@ public:
     }
 
 private:
-    juce::TextButton browseFolderButton{ "Browse Sounds" };
+    class GlassyButton : public juce::TextButton
+    {
+    public:
+        GlassyButton(const juce::String& name) : juce::TextButton(name) {}
+        void paintButton(juce::Graphics& g, bool isMouseOver, bool isButtonDown) override
+        {
+            auto bounds = getLocalBounds().toFloat().reduced(1.0f);
+            g.setColour(juce::Colour(0xff1a1a2e).withAlpha(isButtonDown ? 0.9f : 0.6f));
+            g.fillRoundedRectangle(bounds, 8.0f);
+            g.setColour(juce::Colour(0xff00d4ff).withAlpha(isMouseOver ? 0.8f : 0.4f));
+            g.drawRoundedRectangle(bounds, 8.0f, 1.5f);
+            g.setColour(juce::Colours::white.withAlpha(isMouseOver ? 1.0f : 0.8f));
+            g.setFont(juce::Font(13.0f, juce::Font::bold));
+            g.drawText(getButtonText(), bounds, juce::Justification::centred);
+        }
+    };
+
+    GlassyButton browseFolderButton{ "Browse Sounds" };
     juce::Label folderPathLabel;
     juce::ListBox soundListBox;
     juce::StringArray soundList;
