@@ -1,9 +1,9 @@
-# --- JUCE Specific ---
+# --- JUCE ---
 Builds/
 JuceLibraryCode/
 .jucer
 
-# --- Visual Studio ---
+# --- VS ---
 .vs/
 *.vssscc
 *.vspscc
@@ -19,7 +19,7 @@ x86/
 bin/
 obj/
 
-# --- Tools & Binaries (Large Files) ---
+# --- Tools ---
 yt-dlp.exe
 ffmpeg.exe
 ffprobe.exe
@@ -27,7 +27,7 @@ ffprobe.exe
 *.mp3
 *.flac
 
-# --- OS Specific ---
+# --- OS ---
 .DS_Store
 Thumbs.db
 

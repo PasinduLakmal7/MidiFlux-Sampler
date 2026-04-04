@@ -5,7 +5,7 @@
 #include <functional>
 #include <array>
 
-// Include new modular components
+// new modular components
 #include "PadComponent.h"
 #include "SidebarBrowser.h"
 #include "YouTubeHandler.h"
@@ -39,13 +39,13 @@ private:
     juce::TimeSliceThread backgroundThread{ "Audio Buffering Thread" };
     juce::MidiMessageCollector midiCollector;
 
-    // Modular UI Components
+    // UI Components
     std::unique_ptr<SidebarBrowser> sidebarBrowser;
     std::unique_ptr<YouTubeHandler> youtubeHandler;
     std::array<std::unique_ptr<PadComponent>, 8> padComponents;
     std::array<juce::File, 8> padSoundFiles;
 
-    // Main Control Buttons
+    // Buttons
     juce::TextButton testButton{ "Test Drum Hit" };
     juce::TextEditor youtubeLinkBox;
     juce::TextButton playYoutubeButton{ "Play YouTube" };

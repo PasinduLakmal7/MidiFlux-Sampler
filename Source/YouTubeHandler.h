@@ -2,9 +2,6 @@
 
 #include <JuceHeader.h>
 
-/**
-    A helper class to handle YouTube downloading and streaming via yt-dlp and ffmpeg.
-*/
 class YouTubeHandler
 {
 public:

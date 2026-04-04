@@ -2,7 +2,7 @@
 
 MainComponent::MainComponent()
 {
-    // 1. Audio Permissions and Basics
+    // Audio Permissions and Basics
     if (juce::RuntimePermissions::isRequired(juce::RuntimePermissions::recordAudio) && !juce::RuntimePermissions::isGranted(juce::RuntimePermissions::recordAudio))
     {
         juce::RuntimePermissions::request(juce::RuntimePermissions::recordAudio,
@@ -13,12 +13,12 @@ MainComponent::MainComponent()
         setAudioChannels(2, 2);
     }
 
-    // 2. Initialize Sub-Handlers
+    // Initialize Sub-Handlers
     youtubeHandler = std::make_unique<YouTubeHandler>(formatManager);
     sidebarBrowser = std::make_unique<SidebarBrowser>([this](juce::File f) { loadSoundIntoPad(0, f); });
     addAndMakeVisible(sidebarBrowser.get());
 
-    // 3. MIDI Setup
+    // MIDI Setup
     auto midiInputs = juce::MidiInput::getAvailableDevices();
     if (midiInputs.size() > 0)
     {
@@ -26,7 +26,7 @@ MainComponent::MainComponent()
         deviceManager.setMidiInputEnabled(midiInputs[0].identifier, true);
     }
 
-    // 4. Sampler Setup
+    // Sampler Setup
     formatManager.registerBasicFormats();
 #if JUCE_WINDOWS
     formatManager.registerFormat(new juce::WindowsMediaAudioFormat(), false);
@@ -36,7 +36,7 @@ MainComponent::MainComponent()
     for (int i = 0; i < 5; ++i)
         sampler.addVoice(new juce::SamplerVoice());
 
-    // 5. Pad Setup
+    // Pad Setup
     for (int i = 0; i < 8; ++i)
     {
         padComponents[i] = std::make_unique<PadComponent>(i,
@@ -57,7 +57,7 @@ MainComponent::MainComponent()
     juce::File defaultDrum("C:\\Windows\\Media\\chimes.wav");
     if (defaultDrum.existsAsFile()) loadSoundIntoPad(0, defaultDrum);
 
-    // 6. UI Main Controls
+    // UI Main Controls
     addAndMakeVisible(testButton);
     testButton.onClick = [this] {
         auto msg = juce::MidiMessage::noteOn(1, 36, (juce::uint8)120);
@@ -82,7 +82,7 @@ MainComponent::MainComponent()
 
     backgroundThread.startThread();
 
-    // 7. Theme
+    // Theme
     getLookAndFeel().setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1a1a2e));
     getLookAndFeel().setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff00d4ff));
     getLookAndFeel().setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff0f0f1a));
@@ -154,7 +154,7 @@ void MainComponent::resized()
     playYoutubeButton.setBounds(mainX + mainWidth - 150, 55, 140, 35);
 
     int padWidth = (mainWidth - 30) / 4;
-    int padHeight = juce::jmin(70, (getHeight() - 150) / 2); // basic responsive height
+    int padHeight = juce::jmin(70, (getHeight() - 150) / 2);
     int startX = mainX + 10;
     int startY = 110;
     int padSpacing = 5;

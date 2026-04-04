@@ -2,9 +2,7 @@
 
 #include <JuceHeader.h>
 
-/**
-    A modern sidebar component for browsing sound files and folders.
-*/
+
 class SidebarBrowser : public juce::Component,
     public juce::ListBoxModel
 {
