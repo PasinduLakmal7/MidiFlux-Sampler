@@ -13,7 +13,8 @@
 
 class MainComponent : public juce::AudioAppComponent,
     public juce::MidiInputCallback,
-    public juce::DragAndDropContainer
+    public juce::DragAndDropContainer,
+    public juce::Timer
 {
 public:
     MainComponent();
@@ -29,6 +30,7 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void timerCallback() override;
 
 private:
     // Audio Engine components
@@ -53,6 +55,8 @@ private:
     juce::TextButton playYoutubeButton{ "Play YouTube" };
 
     bool isLoadingRack = false;
+    juce::StringArray connectedMidiDevices;
+    juce::Label midiDebugLabel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

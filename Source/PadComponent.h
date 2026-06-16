@@ -88,6 +88,20 @@ public:
         repaint();
     }
 
+    void triggerFromMidi()
+    {
+        // Simulate a physical mouse click
+        isMouseDown = true;
+        onPadClicked(padIndex);
+        repaint();
+
+        // Release the visual press after 100ms
+        juce::Timer::callAfterDelay(100, [this]() {
+            isMouseDown = false;
+            repaint();
+        });
+    }
+
     // External Drag and Drop
     bool isInterestedInFileDrag(const juce::StringArray&) override { return true; }
     void filesDropped(const juce::StringArray& files, int, int) override

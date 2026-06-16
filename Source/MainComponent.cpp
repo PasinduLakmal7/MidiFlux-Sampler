@@ -40,18 +40,11 @@ MainComponent::MainComponent()
 
 
     // MIDI Setup
-    auto midiInputs = juce::MidiInput::getAvailableDevices();
-    if (midiInputs.size() > 0)
-    {
-        deviceManager.addMidiInputCallback(midiInputs[0].identifier, this);
-        deviceManager.setMidiInputEnabled(midiInputs[0].identifier, true);
-    }
+    startTimer(1000); // Check for new MIDI devices every second
+    timerCallback();  // Do an initial check immediately
 
     // Sampler Setup
     formatManager.registerBasicFormats();
-#if JUCE_WINDOWS
-    formatManager.registerFormat(new juce::WindowsMediaAudioFormat(), false);
-#endif
 
     sampler.clearVoices();
     for (int i = 0; i < 5; ++i)
@@ -80,6 +73,10 @@ MainComponent::MainComponent()
     addAndMakeVisible(youtubeLinkBox);
     youtubeLinkBox.setTextToShowWhenEmpty("Paste YouTube Link Here", juce::Colours::grey);
 
+    addAndMakeVisible(midiDebugLabel);
+    midiDebugLabel.setText("Awaiting MIDI signal...", juce::dontSendNotification);
+    midiDebugLabel.setColour(juce::Label::textColourId, juce::Colours::yellow);
+
     addAndMakeVisible(playYoutubeButton);
     playYoutubeButton.onClick = [this] {
         youtubeHandler->startStream(youtubeLinkBox.getText(), [this](std::unique_ptr<juce::AudioFormatReader> reader) {
@@ -103,7 +100,12 @@ MainComponent::MainComponent()
     setSize(1200, 650);
 }
 
-MainComponent::~MainComponent() { shutdownAudio(); }
+MainComponent::~MainComponent() 
+{ 
+    stopTimer();
+    backgroundThread.stopThread(1000);
+    shutdownAudio(); 
+}
 
 void MainComponent::prepareToPlay(int samplesPerBlockExpected, double sampleRate)
 {
@@ -176,6 +178,7 @@ void MainComponent::resized()
 
     youtubeLinkBox.setBounds(mainX, 20, mainWidth - 140, 38);
     playYoutubeButton.setBounds(mainX + mainWidth - 130, 20, 120, 38);
+    midiDebugLabel.setBounds(mainX, 65, mainWidth, 25);
 
     int padAreaWidth = mainWidth - 20;
     int padWidth = (padAreaWidth - 20) / 4;
@@ -196,8 +199,50 @@ void MainComponent::resized()
 
 void MainComponent::handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message)
 {
-    if (message.isNoteOn()) juce::Logger::writeToLog("Pad Hit! Note: " + juce::String(message.getNoteNumber()));
-    midiCollector.addMessageToQueue(message);
+    // Update the visual debugger so the user knows if the Arduino is sending ANYTHING
+    juce::MessageManager::callAsync([this, message]() {
+        juce::String debugText = "LAST MIDI SIGNAL: ";
+        if (message.isNoteOn()) debugText += "Note On (" + juce::String(message.getNoteNumber()) + ") Vel: " + juce::String(message.getVelocity());
+        else if (message.isNoteOff()) debugText += "Note Off (" + juce::String(message.getNoteNumber()) + ")";
+        else debugText += "Other data (" + juce::String(message.getRawDataSize()) + " bytes)";
+        midiDebugLabel.setText(debugText, juce::dontSendNotification);
+    });
+
+    if (message.isNoteOnOrOff())
+    {
+        // Log the actual incoming physical pad note
+        if (message.isNoteOn()) 
+            juce::Logger::writeToLog("Physical Pad Hit! Note: " + juce::String(message.getNoteNumber()) + " Channel: " + juce::String(message.getChannel()));
+
+        // We only have 8 software pads mapped to notes 36 through 43.
+        // If the Octapad sends notes outside this range, or on a different channel (like 10),
+        // we map it here so it's guaranteed to trigger one of our 8 loaded sounds.
+        juce::MidiMessage mappedMessage = message;
+        mappedMessage.setChannel(1); // Force channel 1
+
+        int note = message.getNoteNumber();
+        int mappedIndex = 0;
+        
+        if (note >= 36 && note <= 43)
+            mappedIndex = note - 36;
+        else
+            mappedIndex = note % 8; // fallback map
+
+        // Send it to the GUI thread to physically "click" the software pad
+        // This guarantees that if the mouse works, the MIDI works!
+        juce::MessageManager::callAsync([this, mappedIndex]() {
+            if (padComponents[mappedIndex] != nullptr)
+                padComponents[mappedIndex]->triggerFromMidi();
+        });
+
+        // We can still pass the message to the collector, but the pad trigger above
+        // bypasses the collector and guarantees sound via the sampler.noteOn click path.
+        midiCollector.addMessageToQueue(message);
+    }
+    else
+    {
+        midiCollector.addMessageToQueue(message);
+    }
 }
 
 void MainComponent::loadSoundIntoPad(int padIndex, juce::File soundFile)
@@ -254,5 +299,20 @@ void MainComponent::clearSoundFromPad(int padIndex)
     {
         int row = rackManager->getCurrentSelectedIndex();
         if (row >= 0) rackManager->updateRackPads(row, padSoundFiles);
+    }
+}
+
+void MainComponent::timerCallback()
+{
+    auto midiInputs = juce::MidiInput::getAvailableDevices();
+    for (auto midiInput : midiInputs)
+    {
+        if (!connectedMidiDevices.contains(midiInput.identifier))
+        {
+            deviceManager.setMidiInputEnabled(midiInput.identifier, true);
+            deviceManager.addMidiInputCallback(midiInput.identifier, this);
+            connectedMidiDevices.add(midiInput.identifier);
+            juce::Logger::writeToLog("Connected new MIDI device: " + midiInput.name);
+        }
     }
 }
